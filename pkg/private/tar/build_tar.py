@@ -83,7 +83,7 @@ class TarFile(object):
     # solution at that time.
     if self.directory and not dest.startswith(self.directory):
       dest = self.directory + dest
-    return dest
+    return "./" + normpath(dest)
 
   def add_file(self, f, destfile, mode=None, ids=None, names=None):
     """Add a file to the tar file.
