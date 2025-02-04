@@ -217,6 +217,13 @@ def _path_relative_to_repo_root(file):
         _relative_workspace_root(_owner(file)),
     )
 
+def _ensure_no_leading_dotdot(path):
+    components = path.split("/")
+    if components[0].startswith(".."):
+        return "/".join(components[1:])
+    else:
+        return path
+
 def _pkg_files_impl(ctx):
     # The input sources are already known.  Let's calculate the destinations...
 
@@ -298,17 +305,12 @@ def _pkg_files_impl(ctx):
             target = file_to_target[src]
             runfiles = target[DefaultInfo].default_runfiles
             if runfiles:
-                base_path = src_dest_paths_map[src] + ".runfiles/" + ctx.workspace_name
                 for rf in runfiles.files.to_list():
-                    dest_path = paths.join(base_path, rf.short_path)
+                    dest_path = _ensure_no_leading_dotdot(rf.short_path)
 
                     # print("Add runfile:", rf.path, 'as', dest_path)
                     have_it = src_dest_paths_map.get(rf)
-                    if have_it:
-                        if have_it != dest_path:
-                            # buildifier: disable=print
-                            print("same source mapped to different locations", rf, have_it, dest_path)
-                    else:
+                    if not have_it:
                         src_dest_paths_map[rf] = dest_path
 
     # At this point, we have a fully valid src -> dest mapping in src_dest_paths_map.
